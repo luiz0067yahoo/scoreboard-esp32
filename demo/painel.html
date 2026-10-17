@@ -1,0 +1,1124 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Placar Eletrônico - Esporte7 System</title>
+
+  <link rel="icon" href="data:,">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+
+    body {
+      background-color: #050505;
+      color: #ffffff;
+      font-family: 'Montserrat', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .scoreboard-container {
+      width: 100%;
+      max-width: 1100px;
+      background-color: #0a0a0a;
+      border-radius: 16px;
+      padding: 25px;
+      border: 3px solid #222;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* Grid Layouts */
+    .row-top, .row-bottom {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 20px;
+      align-items: center;
+    }
+
+    .row-middle {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* Module Box Styling */
+    .module-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .module-title {
+      font-size: 1.2rem;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+    }
+
+    .module-subtitle {
+      font-size: 0.9rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      margin-top: 6px;
+      color: #ccc;
+    }
+
+    .display-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* LED Digital Display */
+    .led-frame {
+      background: #111;
+      border: 4px solid #333;
+      border-radius: 12px;
+      padding: 8px 18px;
+      box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.9), 0 4px 10px rgba(0,0,0,0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      box-sizing: border-box;
+      min-height: 80px;
+    }
+
+    .row-middle .led-frame {
+      min-height: 110px;
+      padding: 10px 24px;
+    }
+
+    .led-text {
+      font-family: 'Orbitron', 'Consolas', 'Courier New', 'Roboto Mono', monospace;
+      font-variant-numeric: tabular-nums;
+      -webkit-font-feature-settings: "tnum" 1;
+      font-feature-settings: "tnum" 1;
+      color: #ff1a1a;
+      text-shadow: 0 0 12px rgba(255, 26, 26, 0.8), 0 0 25px rgba(255, 0, 0, 0.4);
+      line-height: 1.1;
+    }
+
+    .digits-2 { font-size: 3.8rem; letter-spacing: 3px; }
+    .digits-3 { font-size: 3.5rem; letter-spacing: 2px; }
+    .digits-timer { font-size: 5rem; letter-spacing: 3px; }
+
+    input.led-text {
+      background: transparent;
+      border: none;
+      outline: none;
+      text-align: center;
+      font-variant-numeric: tabular-nums;
+      -webkit-font-feature-settings: "tnum" 1;
+      font-feature-settings: "tnum" 1;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: clip;
+      padding: 0;
+      margin: 0;
+      box-sizing: border-box;
+    }
+    input.led-text.digits-2 {
+      width: 2.3ch;
+    }
+    input.led-text.digits-3 {
+      width: 3.4ch;
+    }
+    /* Timer input needs wider width for HH:MM:SS */
+    input.led-text.digits-timer {
+      width: 9.2ch;
+    }
+    input.led-text[readonly] { pointer-events: none; }
+
+    /* Mode Selector */
+    .mode-selector {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      padding-bottom: 15px;
+      border-bottom: 2px solid #222;
+    }
+    .radio-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #aaa;
+      cursor: pointer;
+      text-transform: uppercase;
+      transition: color 0.2s;
+    }
+    .radio-label:hover { color: #fff; }
+    .radio-label input[type="radio"] {
+      width: 18px;
+      height: 18px;
+      accent-color: #ff1a1a;
+      cursor: pointer;
+    }
+
+    /* Control Buttons (+ / -) */
+    .btn-controls {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .btn-step {
+      width: 44px;
+      height: 44px;
+      border-radius: 8px;
+      border: none;
+      color: #fff;
+      font-size: 1.5rem;
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.4);
+      transition: transform 0.1s, filter 0.2s;
+    }
+
+    .btn-step:active { transform: scale(0.92); }
+    .btn-plus { background: linear-gradient(180deg, #2e7d32, #1b5e20); }
+    .btn-minus { background: linear-gradient(180deg, #c62828, #8e0000); }
+
+    /* Central Logo */
+    .logo-container {
+      width: 140px;
+      height: 140px;
+      border-radius: 50%;
+      background: #ffffff;
+      border: 4px solid #1a365d;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 10px;
+      box-shadow: 0 0 15px rgba(255,255,255,0.2);
+    }
+
+    .logo-badge {
+      width: 60px;
+      height: 60px;
+      background: #1a365d;
+      border-radius: 50%;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      font-size: 1.1rem;
+      border: 2px solid #e53e3e;
+      margin-bottom: 4px;
+    }
+
+    .logo-text {
+      color: #000;
+      font-size: 0.55rem;
+      font-weight: 800;
+      line-height: 1.1;
+      text-transform: uppercase;
+    }
+
+    /* Timer Action Buttons */
+    .timer-actions {
+      display: flex;
+      gap: 15px;
+      margin-top: 5px;
+    }
+
+    .btn-timer {
+      padding: 8px 18px;
+      border-radius: 8px;
+      border: none;
+      color: #fff;
+      font-weight: 700;
+      font-size: 0.85rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+      text-transform: uppercase;
+    }
+
+    .btn-start { background: linear-gradient(180deg, #2e7d32, #1b5e20); }
+    .btn-pause { background: linear-gradient(180deg, #f57f17, #fbc02d); color: #000; }
+    .btn-reset-time { background: linear-gradient(180deg, #1565c0, #0d47a1); }
+
+    /* Footer Action Bar */
+    .row-footer {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-top: 10px;
+    }
+
+    .btn-action {
+      padding: 12px 10px;
+      border-radius: 8px;
+      border: none;
+      color: #fff;
+      font-weight: 700;
+      font-size: 0.85rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      text-transform: uppercase;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+    }
+
+    .btn-purple { background: linear-gradient(180deg, #8e24aa, #4a148c); }
+    .btn-orange { background: linear-gradient(180deg, #ef6c00, #e65100); }
+    .btn-teal { background: linear-gradient(180deg, #00838f, #006064); }
+    .btn-blue { background: linear-gradient(180deg, #1565c0, #0d47a1); }
+
+    /* Overlay / Modal */
+    .overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(5px);
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.25s ease, visibility 0.25s ease;
+    }
+
+    .overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .modal-box {
+      background: #141414;
+      border: 2px solid #333;
+      border-radius: 16px;
+      padding: 30px;
+      max-width: 450px;
+      width: 90%;
+      box-shadow: 0 0 25px rgba(0, 0, 0, 0.9), 0 0 10px rgba(255, 26, 26, 0.2);
+      text-align: center;
+      transform: scale(0.85);
+      transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .overlay.active .modal-box {
+      transform: scale(1);
+    }
+
+    .modal-icon {
+      font-size: 2.8rem;
+      color: #ff1a1a;
+      margin-bottom: 15px;
+    }
+
+    .modal-title {
+      font-size: 1.4rem;
+      font-weight: 800;
+      margin-bottom: 10px;
+      letter-spacing: 1px;
+    }
+
+    .modal-message {
+      font-size: 1rem;
+      color: #bbb;
+      margin-bottom: 25px;
+      line-height: 1.4;
+    }
+
+    .modal-buttons {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+    }
+
+    .btn-modal {
+      padding: 10px 22px;
+      border-radius: 8px;
+      border: none;
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+      text-transform: uppercase;
+      transition: transform 0.1s;
+    }
+
+    .btn-modal:active { transform: scale(0.95); }
+    .btn-modal-confirm { background: #e53e3e; color: #fff; }
+    .btn-modal-cancel { background: #333; color: #fff; }
+    .btn-modal-ok { background: #2b6cb0; color: #fff; }
+
+    /* Responsividade */
+    @media (max-width: 850px) {
+      .digits-2 { font-size: 2.8rem; }
+      .digits-timer { font-size: 3.2rem; }
+      .row-footer { grid-template-columns: repeat(2, 1fr); }
+      .logo-container { width: 100px; height: 100px; }
+      .logo-badge { width: 40px; height: 40px; font-size: 0.8rem; }
+      .logo-text { font-size: 0.45rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="scoreboard-container">
+    <!-- Seletor de Modo -->
+    <div class="mode-selector">
+      <label class="radio-label">
+        <input type="radio" name="panelMode" value="automatico" onchange="setPanelMode(this.value)" checked>
+        🤖 Automático API
+      </label>
+      <label class="radio-label">
+        <input type="radio" name="panelMode" value="manual" onchange="setPanelMode(this.value)">
+        🛠️ Manual Local
+      </label>
+    </div>
+
+    <!-- Banner de Partida Sincronizada com Filtro -->
+    <div id="active-match-banner" style="display: none; background: #111; border: 1px solid #222; border-left: 4px solid #e53935; border-radius: 8px; padding: 10px 16px; margin-bottom: 15px; align-items: center; justify-content: space-between; font-size: 0.85rem;">
+      <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+        <span style="background: #fee2e2; color: #dc2626; padding: 2px 8px; border-radius: 6px; font-weight: 800; font-size: 0.72rem; letter-spacing: 0.5px;">AO VIVO</span>
+        <span id="banner-mod-name" style="color: #60a5fa; font-weight: 700;">Modalidade</span>
+        <span style="color: #666;">•</span>
+        <span id="banner-camp-name" style="color: #fff; font-weight: 700;">Campeonato</span>
+        <span style="color: #666;">•</span>
+        <span id="banner-round-name" style="color: #aaa; font-weight: 600;">Rodada</span>
+        <span style="color: #666;">•</span>
+        <span id="banner-match-name" style="color: #4caf50; font-weight: 700;">Partida</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="color: #888; font-size: 0.75rem;">● Sincronizado via API</span>
+        <button onclick="window.location.href='panel_config.html.html'" style="background: #222; border: 1px solid #444; color: #fff; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; font-weight: 600;">⚙️ Trocar</button>
+      </div>
+    </div>
+
+    <!-- Linha Superior: Time A, Logo, Time B -->
+    <div class="row-top">
+      <!-- Time A (3 dígitos) -->
+      <div class="module-card">
+        <span class="module-title" id="title-team-a">TIME A</span>
+        <div class="display-group">
+          <div class="led-frame">
+            <input type="text" class="led-text digits-3" id="score-a" value="000" maxlength="3" onchange="manualInputChanged('score-a')">
+          </div>
+          <div class="btn-controls">
+            <button class="btn-step btn-plus" onclick="changeValue('score-a', 1)">+</button>
+            <button class="btn-step btn-minus" onclick="changeValue('score-a', -1)">-</button>
+          </div>
+        </div>
+        <span class="module-subtitle">PONTOS</span>
+      </div>
+
+      <!-- Logo Central -->
+      <div class="logo-container">
+      </div>
+
+      <!-- Time B (3 dígitos) -->
+      <div class="module-card">
+        <span class="module-title" id="title-team-b">TIME B</span>
+        <div class="display-group">
+          <div class="led-frame">
+            <input type="text" class="led-text digits-3" id="score-b" value="000" maxlength="3" onchange="manualInputChanged('score-b')">
+          </div>
+          <div class="btn-controls">
+            <button class="btn-step btn-plus" onclick="changeValue('score-b', 1)">+</button>
+            <button class="btn-step btn-minus" onclick="changeValue('score-b', -1)">-</button>
+          </div>
+        </div>
+        <span class="module-subtitle">PONTOS</span>
+      </div>
+    </div>
+
+    <!-- Linha Central: Cronômetro (6 dígitos) -->
+    <div class="row-middle">
+      <div class="led-frame">
+        <input type="text" class="led-text digits-timer" id="timer-display"
+          value="00:00:00" maxlength="8" placeholder="HH:MM:SS"
+          oninput="timerMask(this)" onchange="timerInputChanged()" readonly>
+
+      </div>
+      <div class="timer-actions">
+        <button class="btn-timer btn-start" onclick="startTimer()">▶️ Iniciar</button>
+        <button class="btn-timer btn-pause" onclick="pauseTimer()">⏸️ Pausar</button>
+        <button class="btn-timer btn-reset-time" onclick="resetTimer()">↩️ Zerar Tempo</button>
+      </div>
+    </div>
+
+    <!-- Linha Inferior: Faltas A, Período, Faltas B -->
+    <div class="row-bottom">
+      <!-- Faltas A (2 dígitos) -->
+      <div class="module-card">
+        <span class="module-title" id="title-fouls-a">FALTAS A</span>
+        <div class="display-group">
+          <div class="led-frame">
+            <input type="text" class="led-text digits-2" id="fouls-a" value="00" maxlength="2" onchange="manualInputChanged('fouls-a')">
+          </div>
+          <div class="btn-controls">
+            <button class="btn-step btn-plus" onclick="changeValue('fouls-a', 1)">+</button>
+            <button class="btn-step btn-minus" onclick="changeValue('fouls-a', -1)">-</button>
+          </div>
+        </div>
+        <span class="module-subtitle">FALTAS</span>
+      </div>
+
+      <!-- Período (2 dígitos) -->
+      <div class="module-card">
+        <span class="module-title">PERÍODO</span>
+        <div class="display-group">
+          <div class="led-frame">
+            <input type="text" class="led-text digits-2" id="period" value="00" maxlength="2" onchange="manualInputChanged('period')">
+          </div>
+          <div class="btn-controls">
+            <button class="btn-step btn-plus" onclick="changeValue('period', 1)">+</button>
+            <button class="btn-step btn-minus" onclick="changeValue('period', -1)">-</button>
+          </div>
+        </div>
+        <span class="module-subtitle">PERÍODO</span>
+      </div>
+
+      <!-- Faltas B (2 dígitos) -->
+      <div class="module-card">
+        <span class="module-title" id="title-fouls-b">FALTAS B</span>
+        <div class="display-group">
+          <div class="led-frame">
+            <input type="text" class="led-text digits-2" id="fouls-b" value="00" maxlength="2" onchange="manualInputChanged('fouls-b')">
+          </div>
+          <div class="btn-controls">
+            <button class="btn-step btn-plus" onclick="changeValue('fouls-b', 1)">+</button>
+            <button class="btn-step btn-minus" onclick="changeValue('fouls-b', -1)">-</button>
+          </div>
+        </div>
+        <span class="module-subtitle">FALTAS</span>
+      </div>
+    </div>
+
+    <!-- Barra de Ações Inferior -->
+    <div class="row-footer">
+      <button class="btn-action" style="background:#d32f2f" onclick="logout()">🚪 Sair</button>
+      <button class="btn-action btn-purple" onclick="confirmResetScoreboard()">↩️ Zerar Placar</button>
+      <button class="btn-action btn-orange" onclick="swapSides()">🔀 Trocar Lado</button>
+      <button id="btn-settings" class="btn-action btn-teal" onclick="openSettings()">⚙️ Configurações</button>
+      <button class="btn-action btn-blue" onclick="toggleFullscreen()">↕️↔️ Tela Cheia</button>
+    </div>
+  </div>
+
+  <!-- OVERLAY / MODAL -->
+  <div id="modal-overlay" class="overlay">
+    <div class="modal-box">
+      <div class="modal-icon" id="modal-icon">⚠️</div>
+      <h3 class="modal-title" id="modal-title">Atenção</h3>
+      <p class="modal-message" id="modal-message">Mensagem de confirmação...</p>
+      <div class="modal-buttons" id="modal-buttons"></div>
+    </div>
+  </div>
+
+  <script>
+    if (sessionStorage.getItem('authenticated') !== 'true') {
+      window.location.href = 'login.html';
+    }
+
+    let ws = null;
+    let totalSeconds = 0;
+    let swapped = false;
+    let currentPanelMode = 'automatico';
+
+    // Atualização dos campos da interface mantendo campos em foco intactos e evitando re-renderização desnecessária
+    function applyScoreboardState(data) {
+      if (!data) return;
+      const setVal = (id, val) => {
+        const el = document.getElementById(id);
+        if (el && document.activeElement !== el) {
+          const padLen = (id === 'score-a' || id === 'score-b') ? 3 : 2;
+          const newVal = String(val).padStart(padLen, '0');
+          if (el.value !== newVal) {
+            el.value = newVal;
+          }
+        }
+      };
+      if (data.scoreA !== undefined) setVal('score-a', data.scoreA);
+      if (data.scoreB !== undefined) setVal('score-b', data.scoreB);
+      if (data.foulsA !== undefined) setVal('fouls-a', data.foulsA);
+      if (data.foulsB !== undefined) setVal('fouls-b', data.foulsB);
+      if (data.period !== undefined) setVal('period', data.period);
+
+      const timerEl = document.getElementById('timer-display');
+      if (timerEl && document.activeElement !== timerEl && data.timer) {
+        if (timerEl.value !== data.timer) {
+          timerEl.value = data.timer;
+        }
+      }
+      
+      if (data.teamNameA) {
+        const titleA = document.getElementById('title-team-a');
+        if (titleA) titleA.innerText = data.teamNameA.toUpperCase();
+      }
+      if (data.teamNameB) {
+        const titleB = document.getElementById('title-team-b');
+        if (titleB) titleB.innerText = data.teamNameB.toUpperCase();
+      }
+      
+      if (data.totalSeconds !== undefined) {
+        totalSeconds = data.totalSeconds;
+      } else if (data.timer) {
+        const parts = data.timer.split(':');
+        if (parts.length === 3) {
+          totalSeconds = parseInt(parts[0], 10) * 3600 + parseInt(parts[1], 10) * 60 + parseInt(parts[2], 10);
+        }
+      }
+    }
+
+    // Cache da configuração salva no ESP32
+    let autoConfigCache = null;
+    try {
+      const local = localStorage.getItem('esporte7_wizard_setup');
+      if (local) autoConfigCache = JSON.parse(local);
+    } catch(e) {}
+
+    function refreshAutoConfig() {
+      fetch('/api/automation/status')
+        .then(r => r.json())
+        .then(data => {
+          if (data && typeof data === 'object') {
+            autoConfigCache = Object.assign({}, autoConfigCache || {}, data);
+          }
+        })
+        .catch(() => {});
+    }
+    refreshAutoConfig();
+
+    // Atualização automática via rota externa da API (via Proxy ESP32) a cada 1 segundo (SOMENTE no modo automático)
+    let isFetchingState = false;
+    function pollScoreboardAjax() {
+      if (currentPanelMode !== 'automatico') return;
+      if (isFetchingState) return;
+      isFetchingState = true;
+
+      // Recupera configuração do cache ou localStorage
+      let cfg = autoConfigCache;
+      if (!cfg) {
+        try {
+          const local = localStorage.getItem('esporte7_wizard_setup');
+          if (local) cfg = JSON.parse(local);
+        } catch(e) {}
+      }
+
+      // Rota externa configurada do campeonato (padrão 76)
+      const campId = (cfg && (cfg.campeonato || cfg.campeonatoId) && (cfg.campeonato !== '10' && cfg.campeonatoId !== '10'))
+                     ? String(cfg.campeonato || cfg.campeonatoId) : '76';
+      const targetApiUrl = `https://esportes7.com.br/api/championships/${encodeURIComponent(campId)}/matches`;
+      const proxyUrl = `/api/proxy?url=${encodeURIComponent(targetApiUrl)}`;
+
+      fetch(proxyUrl)
+        .then(response => {
+          if (!response.ok) throw new Error('HTTP ' + response.status);
+          return response.json();
+        })
+        .then(matchesList => {
+          if (currentPanelMode === 'automatico' && Array.isArray(matchesList) && matchesList.length > 0) {
+            const targetMod = cfg && (cfg.modalidade || cfg.sport_id) ? String(cfg.modalidade || cfg.sport_id).trim() : '';
+            const targetCamp = cfg && (cfg.campeonato || cfg.campeonatoId) ? String(cfg.campeonato || cfg.campeonatoId).trim() : campId;
+            const targetRodada = cfg && (cfg.rodada || cfg.rodadaId) ? String(cfg.rodada || cfg.rodadaId).trim() : '';
+            const targetPartida = cfg && (cfg.partida || cfg.partidaId) ? String(cfg.partida || cfg.partidaId).trim() : '';
+
+            // 1. Filtrar pelo campeonato selecionado
+            let candidates = matchesList;
+            if (targetCamp) {
+              const byCamp = candidates.filter(m => String(m.championship_id) === targetCamp);
+              if (byCamp.length > 0) candidates = byCamp;
+            }
+
+            // 2. Filtrar pela modalidade selecionada (se houver correspondência com category_id, sport_id ou modalidade)
+            if (targetMod) {
+              const byMod = candidates.filter(m => {
+                if (m.sport_id !== undefined && String(m.sport_id) === targetMod) return true;
+                if (m.sport && (String(m.sport.id) === targetMod || (m.sport.name && m.sport.name.toLowerCase() === targetMod.toLowerCase()))) return true;
+                if (m.category_id !== undefined && String(m.category_id) === targetMod) return true;
+                if (m.modalidade && String(m.modalidade).toLowerCase() === targetMod.toLowerCase()) return true;
+                return false;
+              });
+              if (byMod.length > 0) candidates = byMod;
+            }
+
+            // 3. Filtrar pela rodada selecionada (se especificada e diferente de 'Todas as Rodadas')
+            if (targetRodada && targetRodada !== 'Todas as Rodadas') {
+              const byRound = candidates.filter(m => {
+                const rNum = m.round_number !== undefined && m.round_number !== null ? String(m.round_number).trim() : '';
+                const rName = (m.round_name || '').trim().toLowerCase();
+                const gName = (m.group_name || '').trim().toLowerCase();
+                const tRod = targetRodada.trim().toLowerCase();
+
+                if (rNum && (tRod === rNum || tRod === `rodada ${rNum}`)) return true;
+                if (rName && (rName === tRod || tRod.includes(rName) || rName.includes(tRod))) return true;
+                if (gName && (gName === tRod || tRod.includes(gName))) return true;
+
+                const digits = tRod.replace(/\D/g, '');
+                if (digits && rNum === digits) return true;
+                return false;
+              });
+              if (byRound.length > 0) candidates = byRound;
+            }
+
+            // 4. Filtrar pela partida selecionada
+            let match = null;
+            if (targetPartida) {
+              match = candidates.find(m => String(m.id) === targetPartida);
+            }
+            if (!match) {
+              // Se não encontrou pelo ID específico, busca partida ao vivo ('live' ou 'in_progress') dentro dos candidatos filtrados
+              match = candidates.find(m => m.status === 'live' || m.status === 'in_progress');
+            }
+            if (!match && candidates.length > 0) {
+              // Fallback para a primeira partida dos candidatos filtrados
+              match = candidates[0];
+            }
+
+            if (match) {
+              const stateData = {
+                scoreA: match.home_score !== undefined ? match.home_score : 0,
+                scoreB: match.away_score !== undefined ? match.away_score : 0,
+                teamNameA: match.home_team ? match.home_team.name : 'TIME A',
+                teamNameB: match.away_team ? match.away_team.name : 'TIME B',
+                period: match.round_number || 1
+              };
+
+              // Processa cronômetro a partir de match_details (ex: current_timer_value: 555)
+              if (match.match_details && match.match_details.current_timer_value !== undefined) {
+                const secs = parseInt(match.match_details.current_timer_value, 10);
+                const hrs = Math.floor(secs / 3600);
+                const mins = Math.floor((secs % 3600) / 60);
+                const s = secs % 60;
+                stateData.timer = `${String(hrs).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+                stateData.totalSeconds = secs;
+                stateData.timerRunning = match.match_details.timer_running || false;
+              } else if (match.events && Array.isArray(match.events)) {
+                const timerEvents = match.events.filter(e => e.event_type === 'timer_control' || e.type === 'timer_control');
+                if (timerEvents.length > 0) {
+                  const lastTimer = timerEvents[timerEvents.length - 1];
+                  const gTime = lastTimer.game_time || lastTimer.minute || '';
+                  if (gTime) stateData.timer = gTime;
+                }
+              }
+
+              // Processa faltas dos times a partir dos eventos
+              if (match.events && Array.isArray(match.events)) {
+                const homeId = match.home_team_id || (match.home_team ? match.home_team.id : null);
+                const awayId = match.away_team_id || (match.away_team ? match.away_team.id : null);
+                let fA = 0, fB = 0;
+                match.events.forEach(ev => {
+                  const evType = ev.type || ev.event_type || '';
+                  if (evType.includes('foul') || evType.includes('falta')) {
+                    if (ev.team_id === homeId) fA++;
+                    else if (ev.team_id === awayId) fB++;
+                  }
+                });
+                stateData.foulsA = fA;
+                stateData.foulsB = fB;
+              }
+
+              applyScoreboardState(stateData);
+
+              // Atualiza o banner informativo da partida ativa
+              const banner = document.getElementById('active-match-banner');
+              if (banner) {
+                banner.style.display = 'flex';
+                const bMod = document.getElementById('banner-mod-name');
+                const bCamp = document.getElementById('banner-camp-name');
+                const bRound = document.getElementById('banner-round-name');
+                const bMatch = document.getElementById('banner-match-name');
+                if (bMod) bMod.innerText = targetMod ? `Mod: ${targetMod}` : (match.sport ? match.sport.name : 'Modalidade');
+                if (bCamp) bCamp.innerText = `Camp #${targetCamp || '76'}`;
+                if (bRound) bRound.innerText = targetRodada || (match.round_number ? `Rodada ${match.round_number}` : 'Rodada 1');
+                if (bMatch) bMatch.innerText = `${stateData.teamNameA} vs ${stateData.teamNameB}`;
+              }
+
+              // Atualiza sincronização com os LEDs físicos do ESP32
+              sendScoreboardAction({
+                action: 'sync_external',
+                scoreA: stateData.scoreA,
+                scoreB: stateData.scoreB,
+                foulsA: stateData.foulsA !== undefined ? stateData.foulsA : 0,
+                foulsB: stateData.foulsB !== undefined ? stateData.foulsB : 0,
+                period: stateData.period,
+                totalSeconds: stateData.totalSeconds !== undefined ? stateData.totalSeconds : totalSeconds,
+                timerRunning: stateData.timerRunning !== undefined ? stateData.timerRunning : false
+              });
+            }
+          }
+        })
+        .catch(err => {
+          // Fallback para estado interno local se a requisição externa falhar
+          fetch('/api/scoreboard/state')
+            .then(r => r.json())
+            .then(data => {
+              if (currentPanelMode === 'automatico') applyScoreboardState(data);
+            })
+            .catch(() => {});
+        })
+        .finally(() => {
+          isFetchingState = false;
+        });
+    }
+
+    // Envio de comandos de atualização (via WebSocket ou AJAX POST como contingência)
+    function sendScoreboardAction(payload) {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify(payload));
+      } else {
+        fetch('/api/scoreboard/action', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        })
+        .then(r => r.json())
+        .then(data => applyScoreboardState(data))
+        .catch(e => {});
+      }
+    }
+
+    function connectWs() {
+      if (window.location.protocol === 'https:') {
+        console.log('Painel conectado via HTTPS: sincronização automática do placar operando via AJAX seguro a cada 1s.');
+        return;
+      }
+      const host = window.location.hostname || '192.168.4.1';
+      try {
+        ws = new WebSocket(`ws://${host}:81/`);
+      } catch (e) {
+        console.warn('WebSocket não pôde ser iniciado em contexto seguro:', e);
+        return;
+      }
+
+      ws.onopen = () => {
+        console.log('WebSocket conectado!');
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.type === 'state') {
+            applyScoreboardState(data);
+          }
+        } catch (e) {
+          console.error('Erro ao processar JSON do WebSocket:', e);
+        }
+      };
+
+      ws.onclose = () => {
+        setTimeout(connectWs, 5000);
+      };
+    }
+
+    // Lógica de Contadores (Manual)
+    function changeValue(id, amount) {
+      const el = document.getElementById(id);
+      let val = parseInt(el.value, 10) + amount;
+      if (isNaN(val)) val = 0;
+      if (val < 0) val = 0;
+      const maxVal = (id === 'score-a' || id === 'score-b') ? 999 : 99;
+      if (val > maxVal) val = maxVal;
+      const padLen = (id === 'score-a' || id === 'score-b') ? 3 : 2;
+      el.value = String(val).padStart(padLen, '0');
+
+      sendScoreboardAction({
+        action: 'change',
+        target: id,
+        amount: amount
+      });
+    }
+
+    function manualInputChanged(id) {
+      const el = document.getElementById(id);
+      let val = parseInt(el.value, 10);
+      if (isNaN(val)) val = 0;
+      if (val < 0) val = 0;
+      const maxVal = (id === 'score-a' || id === 'score-b') ? 999 : 99;
+      if (val > maxVal) val = maxVal;
+      const padLen = (id === 'score-a' || id === 'score-b') ? 3 : 2;
+      el.value = String(val).padStart(padLen, '0');
+      
+      sendScoreboardAction({ action: 'set', target: id, value: val });
+    }
+
+    function setPanelMode(mode, saveToServer = true) {
+      currentPanelMode = mode;
+      const isAuto = (mode === 'automatico');
+      if (saveToServer) {
+        fetch('/api/automation/mode', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mode: mode })
+        }).catch(e => console.warn('Falha ao salvar modo', e));
+      }
+
+      // Manter botões no layout (sem display: none) para evitar tremor/salto estrutural na tela
+      document.querySelectorAll('.btn-step').forEach(btn => {
+        btn.disabled = isAuto;
+        btn.style.opacity = isAuto ? '0.35' : '1';
+        btn.style.cursor = isAuto ? 'not-allowed' : 'pointer';
+        btn.style.pointerEvents = isAuto ? 'none' : 'auto';
+      });
+      document.querySelectorAll('.timer-actions button').forEach(btn => {
+        btn.disabled = isAuto;
+        btn.style.opacity = isAuto ? '0.4' : '1';
+        btn.style.cursor = isAuto ? 'not-allowed' : 'pointer';
+        btn.style.pointerEvents = isAuto ? 'none' : 'auto';
+      });
+      document.querySelectorAll('input.led-text').forEach(input => {
+        if (isAuto) input.setAttribute('readonly', 'true');
+        else input.removeAttribute('readonly');
+      });
+
+      // Habilitar/Desabilitar timer input separadamente
+      const timerEl = document.getElementById('timer-display');
+      if (isAuto) timerEl.setAttribute('readonly', 'true');
+      else timerEl.removeAttribute('readonly');
+
+      if (isAuto) {
+        pollScoreboardAjax();
+      }
+    }
+
+    // Máscara automática HH:MM:SS
+    function timerMask(el) {
+      let v = el.value.replace(/[^0-9]/g, '').substring(0, 6);
+      let out = '';
+      if (v.length > 4) out = v.substring(0,2) + ':' + v.substring(2,4) + ':' + v.substring(4,6);
+      else if (v.length > 2) out = v.substring(0,2) + ':' + v.substring(2);
+      else out = v;
+      el.value = out;
+    }
+
+    function timerInputChanged() {
+      const el = document.getElementById('timer-display');
+      const raw = el.value.trim();
+      // Accept HH:MM:SS or MM:SS or raw seconds
+      const parts = raw.split(':').map(p => parseInt(p, 10) || 0);
+      let secs = 0;
+      if (parts.length === 3) secs = parts[0] * 3600 + parts[1] * 60 + parts[2];
+      else if (parts.length === 2) secs = parts[0] * 60 + parts[1];
+      else secs = parts[0];
+      if (secs < 0) secs = 0;
+      totalSeconds = secs;
+      // Normalizar display (ex: 90:00 -> 01:30:00)
+      updateTimerDisplay();
+      // Sincronizar com ESP32
+      sendScoreboardAction({ action: 'timer', command: 'set', value: totalSeconds });
+    }
+
+    // Lógica do Cronômetro Local (Fallback)
+    function updateTimerDisplay() {
+      const hrs = String(Math.floor(totalSeconds / 3600)).padStart(2, '0');
+      const mins = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
+      const secs = String(totalSeconds % 60).padStart(2, '0');
+      const el = document.getElementById('timer-display');
+      if (document.activeElement !== el) {
+        el.value = `${hrs}:${mins}:${secs}`;
+      }
+    }
+
+    // Controle do Cronômetro
+    function startTimer() {
+      timerInputChanged();
+      sendScoreboardAction({ action: 'timer', command: 'start' });
+    }
+
+    function pauseTimer() {
+      sendScoreboardAction({ action: 'timer', command: 'pause' });
+    }
+
+    function resetTimer() {
+      totalSeconds = 0;
+      updateTimerDisplay();
+      sendScoreboardAction({ action: 'timer', command: 'reset' });
+    }
+
+    // Lógica de Troca de Lados
+    function swapSides() {
+      swapped = !swapped;
+      
+      const titleTeamA = document.getElementById('title-team-a');
+      const titleTeamB = document.getElementById('title-team-b');
+      const titleFoulsA = document.getElementById('title-fouls-a');
+      const titleFoulsB = document.getElementById('title-fouls-b');
+
+      if (swapped) {
+        titleTeamA.innerText = 'TIME B';
+        titleTeamB.innerText = 'TIME A';
+        titleFoulsA.innerText = 'FALTAS B';
+        titleFoulsB.innerText = 'FALTAS A';
+      } else {
+        titleTeamA.innerText = 'TIME A';
+        titleTeamB.innerText = 'TIME B';
+        titleFoulsA.innerText = 'FALTAS A';
+        titleFoulsB.innerText = 'FALTAS B';
+      }
+    }
+
+    // Alternar Tela Cheia
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(err => {
+          console.warn('Erro ao solicitar tela cheia:', err);
+        });
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        }
+      }
+    }
+
+    // Gerenciamento do Modal Overlay
+    const overlay = document.getElementById('modal-overlay');
+    const modalTitle = document.getElementById('modal-title');
+    const modalMessage = document.getElementById('modal-message');
+    const modalButtons = document.getElementById('modal-buttons');
+    const modalIcon = document.getElementById('modal-icon');
+
+    function closeModal() {
+      overlay.classList.remove('active');
+    }
+
+    function showAlert(title, message, iconClass = 'ℹ️') {
+      modalIcon.innerHTML = `<span style="font-size: 24px;">${iconClass}</span>`;
+      modalTitle.innerText = title;
+      modalMessage.innerText = message;
+      modalButtons.innerHTML = `<button class="btn-modal btn-modal-ok" onclick="closeModal()">OK</button>`;
+      overlay.classList.add('active');
+    }
+
+    function showConfirm(title, message, onConfirm, iconClass = '⚠️') {
+      modalIcon.innerHTML = `<span style="font-size: 24px;">${iconClass}</span>`;
+      modalTitle.innerText = title;
+      modalMessage.innerText = message;
+      modalButtons.innerHTML = `
+        <button class="btn-modal btn-modal-cancel" onclick="closeModal()">Cancelar</button>
+        <button class="btn-modal btn-modal-confirm" id="btn-confirm-action">Confirmar</button>
+      `;
+      overlay.classList.add('active');
+
+      document.getElementById('btn-confirm-action').onclick = () => {
+        closeModal();
+        onConfirm();
+      };
+    }
+
+    function confirmResetScoreboard() {
+      showConfirm(
+        'Zerar Placar Completo',
+        'Tem certeza de que deseja zerar todos os pontos, faltas, período e o cronômetro?',
+        () => {
+          sendScoreboardAction({ action: 'reset_all' });
+          document.getElementById('score-a').value = '000';
+          document.getElementById('score-b').value = '000';
+          document.getElementById('fouls-a').value = '00';
+          document.getElementById('fouls-b').value = '00';
+          document.getElementById('period').value = '00';
+          totalSeconds = 0;
+          updateTimerDisplay();
+        }
+      );
+    }
+
+    function logout() {
+      fetch('/api/logout', { method: 'POST' })
+        .then(() => {
+          sessionStorage.removeItem('authenticated');
+          window.location.href = 'login.html';
+        }).catch(err => {
+          sessionStorage.removeItem('authenticated');
+          window.location.href = 'login.html';
+        });
+    }
+
+    function factoryReset() {
+      showConfirm(
+        'ATENÇÃO: Reset de Fábrica',
+        'Isso irá apagar todos os usuários, senhas e configurações. O ESP32 será reiniciado. Deseja continuar?',
+        () => {
+          fetch('/api/factory_reset', { method: 'POST' })
+            .then(() => {
+              showAlert('Reset de Fábrica', 'As configurações foram apagadas. O sistema está sendo reiniciado...', '⚠️');
+              setTimeout(() => { window.location.href = 'login.html'; }, 3000);
+            });
+        },
+        '⚠️'
+      );
+    }
+
+    function openSettings() {
+      const role = sessionStorage.getItem('role') || 'Operador';
+      showConfirm(
+        'Configurações do Sistema',
+        'Selecione a seção que deseja configurar no ESP32:',
+        () => {},
+        '⚙️'
+      );
+      const buttonsContainer = document.getElementById('modal-buttons');
+      buttonsContainer.style.flexWrap = 'wrap';
+      
+      if (role === 'Gerente') {
+        buttonsContainer.innerHTML = `
+          <button class="btn-modal btn-modal-cancel" style="padding:10px 14px;" onclick="closeModal()">Cancelar</button>
+          <button class="btn-modal btn-modal-ok" style="padding:10px 14px; background:#8e24aa;" onclick="window.location.href='panel_config.html.html'">Automação API</button>
+        `;
+      } else {
+        buttonsContainer.innerHTML = `
+          <button class="btn-modal btn-modal-cancel" style="padding:10px 14px;" onclick="closeModal()">Cancelar</button>
+          <button class="btn-modal btn-modal-ok" style="padding:10px 14px; background:#1b5e20;" onclick="window.location.href='lan_config.html'">Wi-Fi & Rede</button>
+          <button class="btn-modal btn-modal-confirm" style="padding:10px 14px; background:#0d47a1;" onclick="window.location.href='user_adm.html'">Usuários</button>
+          <button class="btn-modal btn-modal-ok" style="padding:10px 14px; background:#8e24aa;" onclick="window.location.href='panel_config.html.html'">Automação API</button>
+          <button class="btn-modal btn-modal-confirm" style="padding:10px 14px; background:#b71c1c; flex: 1 1 100%; margin-top:5px;" onclick="factoryReset()">⚠️ Restaurar Padrões de Fábrica</button>
+        `;
+      }
+    }
+
+    // Inicialização
+    connectWs();
+    pollScoreboardAjax();
+    setInterval(pollScoreboardAjax, 1000);
+
+    // Obter modo salvo no ESP32 sem reenviar POST redundante
+    fetch('/api/automation/status')
+      .then(r => r.json())
+      .then(data => {
+        const mode = data.mode || 'automatico';
+        const radio = document.querySelector(`input[name="panelMode"][value="${mode}"]`);
+        if (radio) radio.checked = true;
+        setPanelMode(mode, false);
+      })
+      .catch(() => setPanelMode('automatico', false));
+
+    const role = sessionStorage.getItem('role') || 'Operador';
+    if (role === 'Operador') {
+      const btnSettings = document.getElementById('btn-settings');
+      if (btnSettings) btnSettings.style.display = 'none';
+      const modeSel = document.querySelector('.mode-selector');
+      if (modeSel) modeSel.style.display = 'none';
+    }
+  </script>
+</body>
+</html>
