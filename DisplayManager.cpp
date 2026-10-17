@@ -2,7 +2,18 @@
 
 // 18 digits, 35 pixels each (5 LEDs per segment)
 Adafruit_NeoPixel* digits[18] = {nullptr};
-const int digitPins[18] = {4, 5, 6, 1, 2, 3, 7, 8, 9, 10, 11, 12, 13, 14, 16, 17, 20, 21};
+// Mapeamento dos 18 pinos GPIO seguros para ESP32 30 pinos
+// (evita pinos de Flash 6-11, input-only 34-39 e UART0 1/3)
+const int digitPins[18] = {
+  4,  5, 18,   // Dígitos 0, 1, 2  : Pontos Time A (Centena, Dezena, Unidade)
+ 19, 21, 22,   // Dígitos 3, 4, 5  : Pontos Time B (Centena, Dezena, Unidade)
+ 23, 25,       // Dígitos 6, 7     : Faltas Time A (Dezena, Unidade)
+ 26, 27,       // Dígitos 8, 9     : Período (Dezena, Unidade)
+ 32, 33,       // Dígitos 10, 11   : Faltas Time B (Dezena, Unidade)
+ 13, 14,       // Dígitos 12, 13   : Cronômetro Horas (Dezena, Unidade)
+ 16, 17,       // Dígitos 14, 15   : Cronômetro Minutos (Dezena, Unidade)
+ 12,  2        // Dígitos 16, 17   : Cronômetro Segundos (Dezena, Unidade)
+};
 
 // Separador / LEDs fixos: 5 LEDs na GPIO 15
 Adafruit_NeoPixel* separatorPixels = nullptr;

@@ -1,4 +1,4 @@
-DOCUMENTACAO DO PLACAR ELETRONICO ESP32-S3
+DOCUMENTACAO DO PLACAR ELETRONICO ESP32 (30 PINOS)
 
 Este documento resume como utilizar o sistema, suas rotas de API e WebSocket.
 

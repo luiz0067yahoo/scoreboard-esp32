@@ -16,4 +16,4 @@ Fala time! Segue o resumo das atualizações que fiz hoje no código do painel E
    - O Wizard agora tem apenas 4 passos (Domínio, Modalidade, Campeonato e Partida).
    - As opções de selecionar a partida agora puxam os nomes reais dos times para mostrar "Time da Casa x Time Visitante" pra facilitar quem estiver configurando.
 
-Basta compilar/buildar de novo no PlatformIO (VS Code) e dar o upload pro ESP32 S3 que ele vai funcionar lisinho com a plataforma nova! Qualquer dúvida me avisem.
+Basta compilar/buildar de novo no PlatformIO (VS Code) ou Arduino IDE e dar o upload pro ESP32 (30 pinos) que ele vai funcionar lisinho com a plataforma nova! Qualquer dúvida me avisem.

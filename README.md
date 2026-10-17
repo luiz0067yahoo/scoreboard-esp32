@@ -1,6 +1,6 @@
-# 🏀 Inprolink System — Placar Eletrônico ESP32-S3
+# 🏀 Inprolink System — Placar Eletrônico ESP32 (30 Pinos)
 
-![ESP32-S3](https://img.shields.io/badge/Hardware-ESP32--S3-blue?style=flat-square&logo=espressif)
+![ESP32](https://img.shields.io/badge/Hardware-ESP32--30P-blue?style=flat-square&logo=espressif)
 ![C++](https://img.shields.io/badge/Language-C%2B%2B-00599C?style=flat-square&logo=c%2B%2B)
 ![PlatformIO](https://img.shields.io/badge/Toolchain-PlatformIO-orange?style=flat-square&logo=platformio)
 ![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)
@@ -47,7 +47,7 @@ O projeto combina uma interface web responsiva embarcada, resolução de nomes e
 
 ### 🌟 Destaques do Projeto
 
-* **Controle Independente de 18 Dígitos:** Mapeamento dedicado de 18 saídas GPIO do ESP32-S3 para renderização de pontos (3 dígitos para Time A e 3 dígitos para Time B), faltas, período e cronômetro.
+* **Controle Independente de 18 Dígitos:** Mapeamento dedicado de 18 saídas GPIO do ESP32 (30 pinos) para renderização de pontos (3 dígitos para Time A e 3 dígitos para Time B), faltas, período e cronômetro.
 * **Acesso Simplificado:** Navegação direta por endereço IP (`192.168.4.1`) ou hostname mDNS (`http://placar.local`).
 * **Autenticação Embarcada:** Sistema de login com credenciais mestre e suporte a até 10 usuários adicionais salvos na memória NVS.
 * **Consumo de API JSON:** Fluxo encadeado em 4 etapas para seleção automática da partida (Site → Modalidade → Campeonato → Partida).
@@ -130,59 +130,59 @@ Cada dígito utiliza **7 segmentos** (a a g) e cada segmento contém **5 LEDs en
 
 ---
 
-### 🔌 Diagrama de Conexão dos Pinos (ESP32-S3 — 18 Dígitos)
+### 🔌 Diagrama de Conexão dos Pinos (ESP32 30 Pinos — 18 Dígitos)
 
-Abaixo está o diagrama completo das conexões de dados entre os pinos GPIO do ESP32-S3 e cada um dos 18 dígitos do placar:
+Abaixo está o diagrama completo das conexões de dados entre os pinos GPIO do ESP32 (30 pinos) e cada um dos 18 dígitos do placar (evitando pinos de Flash 6-11, pinos input-only 34-39 e preservando os pinos RX0/TX0 para depuração Serial):
 
 ```text
                +-----------------------+
-               |  ESP32-S3 Controller  |
+               |  ESP32 30P Controller |
                +-----------------------+
                            |
   +------------------------+------------------------+
   | (Placar Time A)        | (Placar Time B)        |
-  |-- GPIO 4 ---> Centena  |-- GPIO 1 ---> Centena  |
-  |-- GPIO 5 ---> Dezena   |-- GPIO 2 ---> Dezena   |
-  |-- GPIO 6 ---> Unidade  |-- GPIO 3 ---> Unidade  |
+  |-- GPIO 4 ---> Centena  |-- GPIO 19 --> Centena  |
+  |-- GPIO 5 ---> Dezena   |-- GPIO 21 --> Dezena   |
+  |-- GPIO 18 --> Unidade  |-- GPIO 22 --> Unidade  |
   +------------------------+------------------------+
   | (Faltas Time A)        | (Período)              |
-  |-- GPIO 7 ---> Dezena   |-- GPIO 9 ---> Dezena   |
-  |-- GPIO 8 ---> Unidade  |-- GPIO 10 --> Unidade  |
+  |-- GPIO 23 --> Dezena   |-- GPIO 26 --> Dezena   |
+  |-- GPIO 25 --> Unidade  |-- GPIO 27 --> Unidade  |
   +------------------------+------------------------+
   | (Faltas Time B)        | (Cronômetro HH:MM:SS)  |
-  |-- GPIO 11 --> Dezena   |-- GPIO 13 --> Horas (D)|
-  |-- GPIO 12 --> Unidade  |-- GPIO 14 --> Horas (U)|
+  |-- GPIO 32 --> Dezena   |-- GPIO 13 --> Horas (D)|
+  |-- GPIO 33 --> Unidade  |-- GPIO 14 --> Horas (U)|
   +------------------------|-- GPIO 15 --> Fixo 5LED|
                            |-- GPIO 16 --> Min (D)  |
                            |-- GPIO 17 --> Min (U)  |
-                           |-- GPIO 20 --> Seg (D)  |
-                           |-- GPIO 21 --> Seg (U)  |
+                           |-- GPIO 12 --> Seg (D)  |
+                           |-- GPIO 2 ---> Seg (U)  |
                            +------------------------+
 ```
 
 #### Tabela Detalhada de Pinos
 
-| Módulo no Placar | Dígito | Posição / Função | Pino GPIO (ESP32-S3) | Qtd. LEDs |
+| Módulo no Placar | Dígito | Posição / Função | Pino GPIO (ESP32) | Qtd. LEDs |
 | :--- | :--- | :--- | :--- | :--- |
 | **Pontos Time A** (3 dígitos: 0-999) | Dígito 0 | **Centena** | `GPIO 4` | 35 LEDs |
 | | Dígito 1 | **Dezena** | `GPIO 5` | 35 LEDs |
-| | Dígito 2 | **Unidade** | `GPIO 6` | 35 LEDs |
-| **Pontos Time B** (3 dígitos: 0-999) | Dígito 3 | **Centena** | `GPIO 1` | 35 LEDs |
-| | Dígito 4 | **Dezena** | `GPIO 2` | 35 LEDs |
-| | Dígito 5 | **Unidade** | `GPIO 3` | 35 LEDs |
-| **Faltas Time A** (2 dígitos: 0-99) | Dígito 6 | Dezena | `GPIO 7` | 35 LEDs |
-| | Dígito 7 | Unidade | `GPIO 8` | 35 LEDs |
-| **Período** (2 dígitos: 0-99) | Dígito 8 | Dezena | `GPIO 9` | 35 LEDs |
-| | Dígito 9 | Unidade | `GPIO 10` | 35 LEDs |
-| **Faltas Time B** (2 dígitos: 0-99) | Dígito 10 | Dezena | `GPIO 11` | 35 LEDs |
-| | Dígito 11 | Unidade | `GPIO 12` | 35 LEDs |
+| | Dígito 2 | **Unidade** | `GPIO 18` | 35 LEDs |
+| **Pontos Time B** (3 dígitos: 0-999) | Dígito 3 | **Centena** | `GPIO 19` | 35 LEDs |
+| | Dígito 4 | **Dezena** | `GPIO 21` | 35 LEDs |
+| | Dígito 5 | **Unidade** | `GPIO 22` | 35 LEDs |
+| **Faltas Time A** (2 dígitos: 0-99) | Dígito 6 | Dezena | `GPIO 23` | 35 LEDs |
+| | Dígito 7 | Unidade | `GPIO 25` | 35 LEDs |
+| **Período** (2 dígitos: 0-99) | Dígito 8 | Dezena | `GPIO 26` | 35 LEDs |
+| | Dígito 9 | Unidade | `GPIO 27` | 35 LEDs |
+| **Faltas Time B** (2 dígitos: 0-99) | Dígito 10 | Dezena | `GPIO 32` | 35 LEDs |
+| | Dígito 11 | Unidade | `GPIO 33` | 35 LEDs |
 | **Cronômetro** (6 dígitos / HH:MM:SS) | Dígito 12 | Horas (Dezena) | `GPIO 13` | 35 LEDs |
 | | Dígito 13 | Horas (Unidade) | `GPIO 14` | 35 LEDs |
 | | — | Indicador / LEDs Fixos | `GPIO 15` | 5 LEDs |
 | | Dígito 14 | Minutos (Dezena) | `GPIO 16` | 35 LEDs |
 | | Dígito 15 | Minutos (Unidade) | `GPIO 17` | 35 LEDs |
-| | Dígito 16 | Segundos (Dezena) | `GPIO 20` | 35 LEDs |
-| | Dígito 17 | Segundos (Unidade) | `GPIO 21` | 35 LEDs |
+| | Dígito 16 | Segundos (Dezena) | `GPIO 12` | 35 LEDs |
+| | Dígito 17 | Segundos (Unidade) | `GPIO 2` | 35 LEDs |
 | **Reset Físico NVS** | Botão | Pressionar por 5s | `GPIO 0` (BOOT) | — |
 
 ---
@@ -194,7 +194,7 @@ Abaixo está o diagrama completo das conexões de dados entre os pinos GPIO do E
 2. Faça login e navegue até a seção **Conexão Wi-Fi**.
 3. Informe o **SSID** e a **Senha** do roteador local da quadra/ginásio.
 4. Clique em **Salvar e Conectar**.
-5. O ESP32-S3 se conectará ao roteador local. A partir desse momento, qualquer dispositivo na mesma rede poderá acessar o painel pelo endereço `http://placar.local` ou pelo IP fornecido pelo roteador.
+5. O ESP32 se conectará ao roteador local. A partir desse momento, qualquer dispositivo na mesma rede poderá acessar o painel pelo endereço `http://placar.local` ou pelo IP fornecido pelo roteador.
 
 **2. Cadastro de até 10 Usuários no ESP32**
 1. No painel principal, acesse a aba **Gestão de Usuários**.
@@ -216,8 +216,8 @@ O assistente encadeado de 4 etapas vincula o placar ao servidor de campeonatos p
 
 Para apagar todas as redes salvas, usuários cadastrados e parâmetros de API:
 1. Mantenha o botão conectado à **GPIO 0** pressionado por **5 segundos**.
-2. Todas as partições NVS do ESP32-S3 serão apagadas.
-3. O dispositivo reiniciará no modo Ponto de Acesso padrão (`inprolinksystem`).
+2. Todas as partições NVS do ESP32 serão apagadas.
+3. O dispositivo reiniciará no modo Ponto de Acesso padrão (`esporte7system`).
 
 ---
 
@@ -228,5 +228,5 @@ Para apagar todas as redes salvas, usuários cadastrados e parâmetros de API:
 * **Consumo Médio em Operação:** ~10 A a 15 A em 5V DC (exibindo dígitos coloridos).
 * **Fonte Recomendada:** Fonte chaveada regulada 5V / 20A ou superior.
 * **Sinal de Dados:** Resistor de **330 Ω** em série em cada linha GPIO para proteção de sinal.
-* **GND Comum:** Interligar obrigatoriamente o GND da fonte de 5V ao GND do ESP32-S3.
+* **GND Comum:** Interligar obrigatoriamente o GND da fonte de 5V ao GND do ESP32.
 
